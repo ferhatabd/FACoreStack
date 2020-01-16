@@ -22,9 +22,6 @@ final public class CoreService {
     /// Managed object context
     let managedObjectContext: NSManagedObjectContext
     
-    /// CoreData handler
-    internal let coreDataStack: CoreStack
-    
     /// CoreData model URL
     /// will be generated during init
     static internal var storeUrl: URL?
@@ -37,6 +34,9 @@ final public class CoreService {
     }
     
     
+    /// CoreData handler
+    public let coreDataStack: CoreStack
+    
     
     /* ------------------------------------------------------- */
     // MARK: Init
@@ -45,10 +45,7 @@ final public class CoreService {
     /// - Parameters:
     ///   - bundle: Bundle name to look for the model. If no bundle name is given, the current bundle will be used
     ///   - name: Name of the CoreData model. Don't include the *.sqlite* file extension in the parameter
-    ///   - spaceType: Synchronized Contentful space
-    ///   - assetType: Synchronized Asset type
-    ///   - entryTypes: Models to be synchronized
-    internal init(bundle: Bundle,
+    public init(bundle: Bundle,
                   dataModelName name: String) {
         
         

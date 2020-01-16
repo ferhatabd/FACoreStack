@@ -72,6 +72,6 @@ public protocol PersistenceStore {
      
      - throws: If any error occured during the save operation
      */
-    func save() throws
+    func save() -> Bool
     
 }

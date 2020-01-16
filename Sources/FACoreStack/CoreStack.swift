@@ -160,8 +160,15 @@ public final class CoreStack: PersistenceStore {
      
      - throws: If any error occured during the save operation
      */
-    public func save() throws {
-        try context.save()
+    @discardableResult
+    public func save() -> Bool {
+        do {
+            try context.save()
+            return true
+        }
+        catch {
+            return false
+        }
     }
     
     // MARK: - Helper methods

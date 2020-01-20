@@ -19,23 +19,74 @@ final public class CoreService {
     // MARK: - Private properties
     //
     
-    /// Managed object context
-    let managedObjectContext: NSManagedObjectContext
+    /// Name of the CoreData model
+    private let modelName: String
+    
+    /// isCloud contained
+    private let isCloudSynced: Bool
+    
+    /// Managed object model
+    private let mom: NSManagedObjectModel
     
     /// CoreData model URL
     /// will be generated during init
-    static internal var storeUrl: URL?
+    static internal var storeUrl: URL!
     
-
+    /// Container
+    private lazy var storeLocalContainer: NSPersistentContainer = {
+        let container = NSPersistentContainer(name: self.modelName, managedObjectModel: self.mom)
+        
+        let storeDescription = NSPersistentStoreDescription(url: CoreService.storeUrl)
+        storeDescription.shouldMigrateStoreAutomatically = true
+        storeDescription.shouldInferMappingModelAutomatically = true
+        container.persistentStoreDescriptions = [storeDescription]
+        
+        container.loadPersistentStores { (description, error) in
+            if let _error = error as NSError? {
+                print("Unresolved error \(_error), \(_error.userInfo)")
+            }
+        }
+        container.viewContext.automaticallyMergesChangesFromParent = true
+        return container
+    }()
+    
+    @available(iOS 13, *)
+    /// Cloud container
+    private lazy var storeCloudContainer: NSPersistentCloudKitContainer = {
+        let container = NSPersistentCloudKitContainer(name: self.modelName, managedObjectModel: self.mom)
+        
+        let storeDescription = NSPersistentStoreDescription(url: CoreService.storeUrl)
+        storeDescription.shouldMigrateStoreAutomatically = true
+        storeDescription.shouldInferMappingModelAutomatically = true
+        container.persistentStoreDescriptions = [storeDescription]
+        
+        container.loadPersistentStores { (description, error) in
+            if let _error = error as NSError? {
+                print("Unresolved error \(_error), \(_error.userInfo)")
+            }
+        }
+        container.viewContext.automaticallyMergesChangesFromParent = true
+        return container
+    }()
+    
+    
     // MARK: - Public properties
     //
+    /// Actual managed object context 
     public var moc: NSManagedObjectContext {
-        managedObjectContext
+        if #available(iOS 13, *) {
+            return isCloudSynced ? storeCloudContainer.viewContext : storeLocalContainer.viewContext
+        } else {
+            return  storeLocalContainer.viewContext
+        }
     }
     
     
     /// CoreData handler
-    public let coreDataStack: CoreStack
+    public lazy var coreDataStack: CoreStack = {
+        let coreDataStack = CoreStack(context: storeLocalContainer.viewContext)
+        return coreDataStack
+    }()
     
     
     /* ------------------------------------------------------- */
@@ -46,17 +97,36 @@ final public class CoreService {
     ///   - bundle: Bundle name to look for the model. If no bundle name is given, the current bundle will be used
     ///   - name: Name of the CoreData model. Don't include the *.sqlite* file extension in the parameter
     public init(bundle: Bundle,
-                  dataModelName name: String) {
-        
-        
-        // get the stor url
+                dataModelName name: String) {
+        // get the store url
         CoreService.storeUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last?.appendingPathComponent("\(name).sqlite")
-        
-        let managedObjectContext = CoreService.setupManagedObjectContext(bundle: bundle, name: name)
-        let coreDataStack = CoreStack(context: managedObjectContext)
-        self.managedObjectContext = managedObjectContext
-        self.coreDataStack = coreDataStack
-        
+        self.modelName = name
+        self.isCloudSynced = false
+        guard let mom = NSManagedObjectModel(contentsOf: bundle.url(forResource: name, withExtension: "momd")!
+            ) else {
+                fatalError("Can't init CoreData model")
+        }
+        self.mom = mom
+    }
+    
+    @available(iOS 13, *)
+    /// Initializes a **PersistenceService** handler
+    /// - Parameters:
+    ///   - bundle: Bundle name to look for the model. If no bundle name is given, the current bundle will be used
+    ///   - name: Name of the CoreData model. Don't include the *.sqlite* file extension in the parameter
+    ///   - syncedWithCloud: If set, the model will be synced with the Cloud
+    public init(bundle: Bundle,
+                dataModelName name: String,
+                syncedWithCloud isCloud: Bool = false) {
+        // get the store url
+        CoreService.storeUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last?.appendingPathComponent("\(name).sqlite")
+        self.modelName = name
+        self.isCloudSynced = isCloud
+        guard let mom = NSManagedObjectModel(contentsOf: bundle.url(forResource: name, withExtension: "momd")!
+            ) else {
+                fatalError("Can't init CoreData model")
+        }
+        self.mom = mom
     }
     
     
@@ -66,31 +136,9 @@ final public class CoreService {
     
     // MARK: - Private methods
     //
-    /// Creates and returns an **NSManagedObjectContext** for the given model
-    /// - Parameters:
-    ///   - bundle: Bundle name to look for the model
-    ///   - name: Name of the model
-    static private func setupManagedObjectContext(bundle: Bundle, name: String) -> NSManagedObjectContext {
-        let managedObjectContext = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
-        let modelUrl = bundle.url(forResource: name, withExtension: "momd")!
-        let managedObjectModel = NSManagedObjectModel(contentsOf: modelUrl)!
-        let psc = NSPersistentStoreCoordinator(managedObjectModel: managedObjectModel)
-        
-
-        do {
-            try psc.addPersistentStore(ofType: NSSQLiteStoreType,
-                                       configurationName: nil,
-                                       at: CoreService.storeUrl!,
-                                       options: [NSMigratePersistentStoresAutomaticallyOption : true,
-                                                 NSInferMappingModelAutomaticallyOption : true])
-        } catch {
-            fatalError("can't initialize the persistentStoreCoordinator")
-        }
-        
-        managedObjectContext.persistentStoreCoordinator = psc
-        return managedObjectContext
-    }
+    
     
     // MARK: - Public methods
+    //
 }
 

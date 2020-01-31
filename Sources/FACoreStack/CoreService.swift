@@ -98,8 +98,21 @@ final public class CoreService {
     ///   - name: Name of the CoreData model. Don't include the *.sqlite* file extension in the parameter
     public init(bundle: Bundle,
                 dataModelName name: String) {
+        
+        //
         // get the store url
-        CoreService.storeUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last?.appendingPathComponent("\(name).sqlite")
+        //
+        let targetDirectory: FileManager.SearchPathDirectory
+        
+        // decide the target directory depending on the OS
+        if #available(tvOS 13, *) {
+            targetDirectory = .cachesDirectory
+        } else {
+            targetDirectory = .documentDirectory
+        }
+        
+        CoreService.storeUrl = FileManager.default.urls(for: targetDirectory, in: .userDomainMask).last?.appendingPathComponent("\(name).sqlite")
+        
         self.modelName = name
         self.isCloudSynced = false
         guard let mom = NSManagedObjectModel(contentsOf: bundle.url(forResource: name, withExtension: "momd")!

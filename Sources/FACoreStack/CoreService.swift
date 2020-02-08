@@ -117,7 +117,7 @@ final public class CoreService {
         self.isCloudSynced = false
         guard let mom = NSManagedObjectModel(contentsOf: bundle.url(forResource: name, withExtension: "momd")!
             ) else {
-                fatalError("Can't init CoreData model")
+                preconditionFailure("Can't init CoreData model")
         }
         self.mom = mom
     }
@@ -137,7 +137,7 @@ final public class CoreService {
         self.isCloudSynced = isCloud
         guard let mom = NSManagedObjectModel(contentsOf: bundle.url(forResource: name, withExtension: "momd")!
             ) else {
-                fatalError("Can't init CoreData model")
+                preconditionFailure("Can't init CoreData model")
         }
         self.mom = mom
     }

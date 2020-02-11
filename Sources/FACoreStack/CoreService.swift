@@ -32,6 +32,8 @@ final public class CoreService {
     /// will be generated during init
     static internal var storeUrl: URL!
     
+    internal var groupIdent: String?
+    
     /// Container
     private lazy var storeLocalContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: self.modelName, managedObjectModel: self.mom)
@@ -84,7 +86,7 @@ final public class CoreService {
     
     /// CoreData handler
     public lazy var coreDataStack: CoreStack = {
-        let coreDataStack = CoreStack(context: storeLocalContainer.viewContext)
+        let coreDataStack = CoreStack(context: isCloudSynced ? storeCloudContainer.viewContext : storeLocalContainer.viewContext)
         return coreDataStack
     }()
     
@@ -97,21 +99,47 @@ final public class CoreService {
     ///   - bundle: Bundle name to look for the model. If no bundle name is given, the current bundle will be used
     ///   - name: Name of the CoreData model. Don't include the *.sqlite* file extension in the parameter
     public init(bundle: Bundle,
-                dataModelName name: String) {
+                dataModelName name: String,
+                groupIdent: String?=nil) {
+        
+        self.groupIdent = groupIdent
         
         //
         // get the store url
         //
-        let targetDirectory: FileManager.SearchPathDirectory
         
-        // decide the target directory depending on the OS
-        if #available(tvOS 13, *) {
-            targetDirectory = .cachesDirectory
-        } else {
-            targetDirectory = .documentDirectory
+        //
+        // check if the groupIdent is empty
+        //
+        if let group = groupIdent {
+            guard var url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) else {
+                preconditionFailure("Can't reach group container URL")
+            }
+            
+            url = url.absoluteURL
+            
+            #if os(tvOS)
+                url.appendPathComponent("Library/Caches")
+            #endif
+            
+            url.appendPathComponent("\(name).sqlite")
+            
+            CoreService.storeUrl = url
+        } else { // there is no group -> initialize the store on the local target
+            
+            let targetDirectory: FileManager.SearchPathDirectory
+            
+            // decide the target directory depending on the OS
+            #if os(tvOS)
+                targetDirectory = .cachesDirectory
+            
+            #else
+                targetDirectory = .documentDirectory
+            #endif
+            
+            CoreService.storeUrl = FileManager.default.urls(for: targetDirectory, in: .userDomainMask).last?.appendingPathComponent("\(name).sqlite")
+            
         }
-        
-        CoreService.storeUrl = FileManager.default.urls(for: targetDirectory, in: .userDomainMask).last?.appendingPathComponent("\(name).sqlite")
         
         self.modelName = name
         self.isCloudSynced = false
@@ -122,7 +150,7 @@ final public class CoreService {
         self.mom = mom
     }
     
-    @available(iOS 13, *)
+    @available(iOS 13, tvOS 13, *)
     /// Initializes a **PersistenceService** handler
     /// - Parameters:
     ///   - bundle: Bundle name to look for the model. If no bundle name is given, the current bundle will be used
@@ -130,9 +158,47 @@ final public class CoreService {
     ///   - syncedWithCloud: If set, the model will be synced with the Cloud
     public init(bundle: Bundle,
                 dataModelName name: String,
-                syncedWithCloud isCloud: Bool = false) {
+                syncedWithCloud isCloud: Bool = false,
+                groupIdent: String? = nil) {
+        
+        self.groupIdent = groupIdent
+        
+        //
         // get the store url
-        CoreService.storeUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last?.appendingPathComponent("\(name).sqlite")
+        //
+        
+        //
+        // check if the groupIdent is empty
+        //
+        if let group = groupIdent {
+            guard var url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) else {
+                preconditionFailure("Can't reach group container URL")
+            }
+            
+            url = url.absoluteURL
+            
+            #if os(tvOS)
+                url.appendPathComponent("Library/Caches")
+            #endif
+            
+            url.appendPathComponent("\(name).sqlite")
+            
+            CoreService.storeUrl = url
+            CoreService.storeUrl = url
+        } else { // there is no group -> initialize the store on the local target
+            
+            let targetDirectory: FileManager.SearchPathDirectory
+            
+            // decide the target directory depending on the OS
+            #if os(tvOS)
+                targetDirectory = .cachesDirectory
+            #else
+                targetDirectory = .documentDirectory
+            #endif
+            
+            CoreService.storeUrl = FileManager.default.urls(for: targetDirectory, in: .userDomainMask).last?.appendingPathComponent("\(name).sqlite")
+            
+        }
         self.modelName = name
         self.isCloudSynced = isCloud
         guard let mom = NSManagedObjectModel(contentsOf: bundle.url(forResource: name, withExtension: "momd")!

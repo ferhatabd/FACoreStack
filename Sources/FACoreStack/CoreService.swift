@@ -52,7 +52,7 @@ final public class CoreService {
         return container
     }()
     
-    @available(iOS 13, *)
+    @available(iOS 13, tvOS 13, *)
     /// Cloud container
     private lazy var storeCloudContainer: NSPersistentCloudKitContainer = {
         let container = NSPersistentCloudKitContainer(name: self.modelName, managedObjectModel: self.mom)
@@ -76,7 +76,7 @@ final public class CoreService {
     //
     /// Actual managed object context 
     public var moc: NSManagedObjectContext {
-        if #available(iOS 13, *) {
+        if #available(iOS 13, tvOS 13, *) {
             return isCloudSynced ? storeCloudContainer.viewContext : storeLocalContainer.viewContext
         } else {
             return  storeLocalContainer.viewContext
@@ -85,9 +85,13 @@ final public class CoreService {
     
     
     /// CoreData handler
+ 
     public lazy var coreDataStack: CoreStack = {
-        let coreDataStack = CoreStack(context: isCloudSynced ? storeCloudContainer.viewContext : storeLocalContainer.viewContext)
-        return coreDataStack
+        if #available(iOS 13, tvOS 13, *) {
+            return  CoreStack(context: isCloudSynced ? storeCloudContainer.viewContext : storeLocalContainer.viewContext)
+        } else {
+            return CoreStack(context: storeLocalContainer.viewContext)
+        }
     }()
     
     

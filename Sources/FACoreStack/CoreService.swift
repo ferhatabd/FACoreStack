@@ -94,6 +94,16 @@ final public class CoreService {
         }
     }()
     
+    /// Returns a new background context
+    public func getBackgroundContext() -> NSManagedObjectContext {
+        if #available(iOS 13, *) {
+            return isCloudSynced ? storeCloudContainer.newBackgroundContext() :
+            storeLocalContainer.newBackgroundContext()
+        } else {
+            return storeLocalContainer.newBackgroundContext()
+        }
+    }
+    
     
     /* ------------------------------------------------------- */
     // MARK: Init

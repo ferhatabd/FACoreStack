@@ -207,3 +207,7 @@ public final class CoreStack: PersistenceStore {
         }
     }
 }
+
+public extension CodingUserInfoKey {
+    static let managedObjectContext = CodingUserInfoKey(rawValue: "managedObjectContext")!
+}

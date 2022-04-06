@@ -66,7 +66,7 @@ final public class CoreService {
         storeDescription.shouldInferMappingModelAutomatically = true
         container.persistentStoreDescriptions = [storeDescription]
         
-        container.loadPersistentStores { (description, error) inss
+        container.loadPersistentStores { (description, error) in
             if let _error = error as NSError? {
                 print("Unresolved error \(_error), \(_error.userInfo)")
             }

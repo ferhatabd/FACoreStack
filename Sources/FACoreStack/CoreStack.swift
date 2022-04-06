@@ -117,6 +117,7 @@ public final class CoreStack: PersistenceStore {
      */
     public func fetchAll<T>(type: Any.Type, predicate: NSPredicate = NSPredicate(value: true)) throws -> [T] {
         let request = try fetchRequest(for: type, predicate: predicate)
+        request.returnsObjectsAsFaults = false
         let items: [T] = try context.fetch(request) as! [T]
         return items
     }

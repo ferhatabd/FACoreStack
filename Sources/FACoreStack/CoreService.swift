@@ -28,6 +28,9 @@ final public class CoreService {
     /// Managed object model
     private let mom: NSManagedObjectModel
     
+    /// Merge policy
+    private let mergePolicy: AnyObject
+    
     /// CoreData model URL
     /// will be generated during init
     static internal var storeUrl: URL!
@@ -49,6 +52,7 @@ final public class CoreService {
             }
         }
         container.viewContext.automaticallyMergesChangesFromParent = true
+        container.viewContext.mergePolicy = mergePolicy
         return container
     }()
     
@@ -68,6 +72,7 @@ final public class CoreService {
             }
         }
         container.viewContext.automaticallyMergesChangesFromParent = true
+        container.viewContext.mergePolicy = mergePolicy
         return container
     }()
     
@@ -104,7 +109,8 @@ final public class CoreService {
     ///   - name: Name of the CoreData model. Don't include the *.sqlite* file extension in the parameter
     public init(bundle: Bundle,
                 dataModelName name: String,
-                groupIdent: String?=nil) {
+                groupIdent: String?=nil,
+                mergePolicy: AnyObject = NSErrorMergePolicy) {
         
         self.groupIdent = groupIdent
         
@@ -152,6 +158,7 @@ final public class CoreService {
                 preconditionFailure("Can't init CoreData model")
         }
         self.mom = mom
+        self.mergePolicy = mergePolicy
     }
     
     @available(iOS 13, tvOS 13, *)
@@ -163,7 +170,8 @@ final public class CoreService {
     public init(bundle: Bundle,
                 dataModelName name: String,
                 syncedWithCloud isCloud: Bool = false,
-                groupIdent: String? = nil) {
+                groupIdent: String? = nil,
+                mergePolicy: AnyObject = NSErrorMergePolicy) {
         
         self.groupIdent = groupIdent
         
@@ -210,6 +218,7 @@ final public class CoreService {
                 preconditionFailure("Can't init CoreData model")
         }
         self.mom = mom
+        self.mergePolicy = mergePolicy
     }
     
     

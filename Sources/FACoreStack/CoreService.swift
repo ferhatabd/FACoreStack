@@ -29,7 +29,7 @@ final public class CoreService {
     private let mom: NSManagedObjectModel
     
     /// Merge policy
-    private let mergePolicy: AnyObject
+    private let mergePolicy: NSMergePolicy
     
     /// CoreData model URL
     /// will be generated during init
@@ -120,7 +120,7 @@ final public class CoreService {
     public init(bundle: Bundle,
                 dataModelName name: String,
                 groupIdent: String?=nil,
-                mergePolicy: AnyObject = NSErrorMergePolicy) {
+                mergePolicy: NSMergePolicy = .error) {
         
         self.groupIdent = groupIdent
         
@@ -181,7 +181,7 @@ final public class CoreService {
                 dataModelName name: String,
                 syncedWithCloud isCloud: Bool = false,
                 groupIdent: String? = nil,
-                mergePolicy: AnyObject = NSErrorMergePolicy) {
+                mergePolicy: NSMergePolicy = .error) {
         
         self.groupIdent = groupIdent
         

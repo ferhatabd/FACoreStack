@@ -115,10 +115,10 @@ public final class CoreStack: PersistenceStore {
      
      - returns: An array of matching objects
      */
-    public func fetchAll<T>(type: Any.Type, predicate: NSPredicate = NSPredicate(value: true)) throws -> [T] {
+    public func fetchAll<T>(type: Any.Type, predicate: NSPredicate = NSPredicate(value: true), context requiredContext: NSManagedObjectContext? = nil) throws -> [T] {
         let request = try fetchRequest(for: type, predicate: predicate)
         request.returnsObjectsAsFaults = false
-        let items: [T] = try context.fetch(request) as! [T]
+        let items: [T] = try (requiredContext ?? context).fetch(request) as! [T]
         return items
     }
     

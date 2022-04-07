@@ -7,6 +7,7 @@
 
 
 import Foundation
+import CoreData
 
 /// Protocol for persistence stores used by `SynchronizationManager`
 public protocol PersistenceStore {
@@ -41,7 +42,7 @@ public protocol PersistenceStore {
      
      - returns: An array of matching objects
      */
-    func fetchAll<T>(type: Any.Type, predicate: NSPredicate) throws -> [T]
+    func fetchAll<T>(type: Any.Type, predicate: NSPredicate, context requiredContext: NSManagedObjectContext?) throws -> [T]
     
     /**
      Returns an array of names of properties the given type stores persistently.
